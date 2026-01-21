@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>虚構幻想</title>
+  <style>
+    :root{
+      --bg:#000;
+      --fg:#eaf2ff;
+      --muted:rgba(234,242,255,.70);
+      --line:rgba(234,242,255,.18);
+
+      --accent:#4fc3ff;
+      --accent2:#a7e7ff;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+
+    body{
+      margin:0;
+      background:
+        radial-gradient(900px 500px at 50% 20%, rgba(79,195,255,.10), transparent 60%),
+        radial-gradient(900px 600px at 50% 120%, rgba(79,195,255,.06), transparent 60%),
+        var(--bg);
+      color:var(--fg);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      overflow:hidden;
+    }
+
+    #dust{
+      position:fixed;
+      inset:0;
+      width:100%;
+      height:100%;
+      z-index:-1;
+      pointer-events:none;
+    }
+
+    .wrap{
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+
+    .title-area{
+      width:min(980px, 92vw);
+      text-align:center;
+      margin-top: clamp(42px, 8vh, 80px);
+    }
+    .title{
+      font-size: clamp(44px, 8vw, 86px);
+      letter-spacing: .22em;
+      font-weight: 300;
+      color: rgba(234,242,255,.95);
+      text-shadow:
+        0 0 10px rgba(167,231,255,.12),
+        0 0 26px rgba(79,195,255,.12);
+      margin:0;
+    }
+    .title-line{
+      width:min(640px, 74vw);
+      height:1px;
+      margin: 16px auto 0;
+      background: linear-gradient(90deg, transparent, var(--line), transparent);
+    }
+
+    .menu{
+      margin-top: clamp(40px, 10vh, 90px);
+      display:flex;
+      flex-direction:column;
+      gap: 18px;
+      align-items:center;
+      user-select:none;
+    }
+
+    .menu-item{
+      position:relative;
+      display:inline-block;
+      padding: 6px 18px;
+      font-size: 22px;
+      letter-spacing: .12em;
+      color: rgba(234,242,255,.85);
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      outline:none;
+      -webkit-tap-highlight-color: transparent;
+      text-shadow: 0 0 18px rgba(0,0,0,.35);
+
+      white-space: nowrap;
+      min-width: 14ch;
+      text-align: center;
+    }
+
+    /* ラベル：実テキストは隠して、描画は疑似要素に統一 */
+    .menu-item .label{
+      position:relative;
+      display:block;
+      width:100%;
+      height: 1.2em;
+      line-height: 1.2em;
+      color: transparent;
+
+      white-space: nowrap;
+      overflow-wrap: normal;
+      word-break: keep-all;
+
+      transform: translateZ(0);
+      will-change: transform, filter;
+    }
+
+    /* ★ここが今回の本修正：
+       “箱の中央”ではなく “文字幅の中央”で配置する */
+    .menu-item .label::after{
+      content: attr(data-display-text);
+      position:absolute;
+      top:0;
+      left:50%;
+      transform: translateX(-50%); /* ← 文字自体の中心で固定 */
+      width: max-content;
+      height:100%;
+      opacity:1;
+      pointer-events:none;
+
+      color: rgba(234,242,255,.85);
+      text-shadow: 0 0 18px rgba(0,0,0,.35);
+
+      white-space: nowrap;
+      overflow-wrap: normal;
+      word-break: keep-all;
+    }
+
+    /* グリッチ用オーバーレイも同じ中央基準に */
+    .menu-item .label::before{
+      content: attr(data-glitch-text);
+      position:absolute;
+      top:0;
+      left:50%;
+      transform: translateX(-50%);
+      width: max-content;
+      height:100%;
+      opacity:0;
+      pointer-events:none;
+
+      color: var(--accent2);
+      mix-blend-mode: screen;
+      text-shadow:
+        1px 0 rgba(79,195,255,.35),
+        -1px 0 rgba(255,120,180,.18);
+      filter: blur(.2px);
+
+      white-space: nowrap;
+      overflow-wrap: normal;
+      word-break: keep-all;
+    }
+
+    /* ホバー中：色だけアクセントへ */
+    .menu-item.is-alt .label::after{
+      color: var(--accent);
+      text-shadow:
+        0 0 10px rgba(79,195,255,.22),
+        0 0 22px rgba(79,195,255,.14);
+    }
+
+    /* グリッチ中（短時間だけ）
+       ※ transform は“jitter用”に上書きされるけど、
+       最初に translateX(-50%) で中央が取れているので見た目が安定します */
+    .menu-item.is-glitch .label::before{
+      opacity: 1;
+      animation: glitchJitter 120ms steps(2,end) infinite;
+    }
+    .menu-item.is-glitch .label{
+      animation: baseShake 90ms steps(2,end) infinite;
+      filter: saturate(1.2);
+    }
+
+    @keyframes glitchJitter{
+      0%   { transform: translateX(-50%) translate(0,0) skewX(0deg); clip-path: inset(0 0 0 0); }
+      15%  { transform: translateX(-50%) translate(2px,-1px) skewX(6deg); clip-path: inset(12% 0 62% 0); }
+      30%  { transform: translateX(-50%) translate(-2px,1px) skewX(-8deg); clip-path: inset(46% 0 28% 0); }
+      45%  { transform: translateX(-50%) translate(3px,0) skewX(10deg); clip-path: inset(70% 0 8% 0); }
+      60%  { transform: translateX(-50%) translate(-3px,-1px) skewX(-10deg); clip-path: inset(22% 0 52% 0); }
+      75%  { transform: translateX(-50%) translate(1px,2px) skewX(6deg); clip-path: inset(58% 0 16% 0); }
+      100% { transform: translateX(-50%) translate(0,-2px) skewX(0deg); clip-path: inset(0 0 0 0); }
+    }
+
+    @keyframes baseShake{
+      0%{ transform: translate(0,0); }
+      25%{ transform: translate(-1px,0); }
+      50%{ transform: translate(1px,-1px); }
+      75%{ transform: translate(0,1px); }
+      100%{ transform: translate(-1px,-1px); }
+    }
+
+    .hint{
+      position:fixed;
+      bottom: 22px;
+      left:50%;
+      transform: translateX(-50%);
+      color: rgba(234,242,255,.30);
+      font-size: 12px;
+      letter-spacing:.18em;
+      pointer-events:none;
+    }
+
+    @media (max-width:520px){
+      .menu-item{ font-size: 18px; min-width: 16ch; }
+      .title{ letter-spacing:.16em; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="dust"></canvas>
+
+  <div class="wrap">
+    <div class="title-area">
+      <h1 class="title">虚構幻想</h1>
+      <div class="title-line"></div>
+    </div>
+
+    <div class="menu" role="navigation" aria-label="Site menu">
+      <button class="menu-item" type="button" data-original="はじめから" data-alt="- WEB TOP -">
+        <span class="label" data-display-text="はじめから" data-glitch-text="">はじめから</span>
+      </button>
+
+      <button class="menu-item" type="button" data-original="作品紹介" data-alt="- WORKS -">
+        <span class="label" data-display-text="作品紹介" data-glitch-text="">作品紹介</span>
+      </button>
+
+      <button class="menu-item" type="button" data-original="ギャラリー" data-alt="- GALLERY -">
+        <span class="label" data-display-text="ギャラリー" data-glitch-text="">ギャラリー</span>
+      </button>
+
+      <button class="menu-item" type="button" data-original="メンバー" data-alt="- MEMBERS -">
+        <span class="label" data-display-text="メンバー" data-glitch-text="">メンバー</span>
+      </button>
+
+      <button class="menu-item" type="button" data-original="依頼" data-alt="- CONTACT -">
+        <span class="label" data-display-text="依頼" data-glitch-text="">依頼</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="hint">MOVE CURSOR</div>
+
+<script>
+/* グリッチ：ホバー開始時に1回だけ */
+(() => {
+  const items = document.querySelectorAll(".menu-item");
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-#@$%&*";
+
+  function glitchOnce(label, target, duration = 220) {
+    const start = performance.now();
+    const len = target.length;
+
+    function frame(now) {
+      const t = Math.min(1, (now - start) / duration);
+      const reveal = Math.floor(len * t);
+
+      let out = "";
+      for (let i = 0; i < len; i++) {
+        if (i < reveal) out += target[i];
+        else out += letters[(Math.random() * letters.length) | 0];
+      }
+      label.dataset.glitchText = out;
+
+      if (t < 1) requestAnimationFrame(frame);
+      else label.dataset.glitchText = "";
+    }
+    requestAnimationFrame(frame);
+  }
+
+  items.forEach(btn => {
+    const label = btn.querySelector(".label");
+    const original = btn.dataset.original ?? label.textContent.trim();
+    const alt = btn.dataset.alt ?? original;
+
+    label.dataset.displayText = original;
+    label.dataset.glitchText = "";
+
+    let played = false;
+    let glitchTimer = null;
+
+    btn.addEventListener("mouseenter", () => {
+      btn.classList.add("is-alt");
+      label.dataset.displayText = alt;
+
+      if (played) return;
+      played = true;
+
+      btn.classList.add("is-glitch");
+      glitchOnce(label, alt);
+
+      glitchTimer = window.setTimeout(() => {
+        btn.classList.remove("is-glitch");
+        glitchTimer = null;
+        label.dataset.glitchText = "";
+      }, 260);
+    });
+
+    btn.addEventListener("mouseleave", () => {
+      played = false;
+      if (glitchTimer) { clearTimeout(glitchTimer); glitchTimer = null; }
+
+      btn.classList.remove("is-glitch");
+      btn.classList.remove("is-alt");
+
+      label.dataset.displayText = original;
+      label.dataset.glitchText = "";
+    });
+
+    btn.addEventListener("touchstart", () => {
+      btn.classList.add("is-alt");
+      btn.classList.add("is-glitch");
+      label.dataset.displayText = alt;
+      glitchOnce(label, alt, 180);
+
+      window.setTimeout(() => btn.classList.remove("is-glitch"), 240);
+      window.setTimeout(() => {
+        btn.classList.remove("is-alt");
+        label.dataset.displayText = original;
+        label.dataset.glitchText = "";
+      }, 520);
+    }, { passive:true });
+  });
+})();
+
+/* 埃パーティクル（薄く青く光る） */
+(() => {
+  const canvas = document.getElementById("dust");
+  const ctx = canvas.getContext("2d", { alpha:true });
+
+  const DPR = Math.min(2, window.devicePixelRatio || 1);
+  let W=0, H=0;
+
+  function resize(){
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener("resize", resize, { passive:true });
+  resize();
+
+  const rand = (a,b)=>a+Math.random()*(b-a);
+
+  const baseCount = Math.floor((W * H) / 26000);
+  const count = Math.max(26, Math.min(110, baseCount));
+
+  const ps = [];
+  for(let i=0;i<count;i++){
+    ps.push({
+      x: rand(0,W), y: rand(0,H),
+      r: rand(0.6, 2.0),
+      vx: rand(-0.10, 0.12),
+      vy: rand(-0.08, 0.10),
+      a: rand(0.06, 0.20),
+      tw: rand(0.003, 0.010),
+      ph: rand(0, Math.PI*2),
+    });
+  }
+
+  function step(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = "rgba(234,242,255,0.012)";
+    ctx.fillRect(0,0,W,H);
+
+    ctx.shadowColor = "rgba(79,195,255,0.22)";
+    ctx.shadowBlur = 7;
+
+    for(const p of ps){
+      p.ph += p.tw;
+      const alpha = p.a + Math.sin(p.ph) * 0.03;
+
+      p.vx += rand(-0.0025, 0.0025);
+      p.vy += rand(-0.0025, 0.0025);
+      p.vx = Math.max(-0.18, Math.min(0.18, p.vx));
+      p.vy = Math.max(-0.14, Math.min(0.14, p.vy));
+
+      p.x += p.vx;
+      p.y += p.vy;
+
+      if(p.x < -12) p.x = W + 12;
+      if(p.x > W + 12) p.x = -12;
+      if(p.y < -12) p.y = H + 12;
+      if(p.y > H + 12) p.y = -12;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(120,180,255,${alpha})`;
+      ctx.fill();
+    }
+
+    requestAnimationFrame(step);
+  }
+  step();
+})();
+</script>
+</body>
+</html>
