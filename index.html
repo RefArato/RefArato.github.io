@@ -328,7 +328,8 @@
   });
 })();
 
-/* 埃パーティクル（薄く青く光る） */
+<script>
+/* 埃パーティクル（より発光／四角） */
 (() => {
   const canvas = document.getElementById("dust");
   const ctx = canvas.getContext("2d", { alpha:true });
@@ -350,57 +351,76 @@
 
   const rand = (a,b)=>a+Math.random()*(b-a);
 
-  const baseCount = Math.floor((W * H) / 26000);
-  const count = Math.max(26, Math.min(110, baseCount));
+  const baseCount = Math.floor((W * H) / 24000); // 少し増やす
+  const count = Math.max(34, Math.min(140, baseCount));
 
   const ps = [];
   for(let i=0;i<count;i++){
     ps.push({
       x: rand(0,W), y: rand(0,H),
-      r: rand(0.6, 2.0),
-      vx: rand(-0.10, 0.12),
-      vy: rand(-0.08, 0.10),
-      a: rand(0.06, 0.20),
-      tw: rand(0.003, 0.010),
+      s: rand(1.2, 3.4),          // size（四角の一辺）
+      vx: rand(-0.12, 0.14),
+      vy: rand(-0.10, 0.12),
+      a: rand(0.10, 0.28),        // 基本透明度を上げる
+      tw: rand(0.004, 0.012),
       ph: rand(0, Math.PI*2),
     });
   }
 
   function step(){
-    ctx.clearRect(0,0,W,H);
-    ctx.fillStyle = "rgba(234,242,255,0.012)";
+    // ほんのり残像（暗幕）
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = "rgba(0,0,0,0.20)"; // 値を下げると残像強め／上げると残像弱め
     ctx.fillRect(0,0,W,H);
 
-    ctx.shadowColor = "rgba(79,195,255,0.22)";
-    ctx.shadowBlur = 7;
+    // 光を足していく
+    ctx.globalCompositeOperation = "lighter";
+
+    // グロー設定（強め）
+    ctx.shadowColor = "rgba(79,195,255,0.55)";
+    ctx.shadowBlur = 18;
 
     for(const p of ps){
       p.ph += p.tw;
-      const alpha = p.a + Math.sin(p.ph) * 0.03;
+      const alpha = Math.max(0, p.a + Math.sin(p.ph) * 0.06);
 
-      p.vx += rand(-0.0025, 0.0025);
-      p.vy += rand(-0.0025, 0.0025);
-      p.vx = Math.max(-0.18, Math.min(0.18, p.vx));
-      p.vy = Math.max(-0.14, Math.min(0.14, p.vy));
+      // ゆらぎ
+      p.vx += rand(-0.0030, 0.0030);
+      p.vy += rand(-0.0030, 0.0030);
+      p.vx = Math.max(-0.22, Math.min(0.22, p.vx));
+      p.vy = Math.max(-0.18, Math.min(0.18, p.vy));
 
       p.x += p.vx;
       p.y += p.vy;
 
-      if(p.x < -12) p.x = W + 12;
-      if(p.x > W + 12) p.x = -12;
-      if(p.y < -12) p.y = H + 12;
-      if(p.y > H + 12) p.y = -12;
+      if(p.x < -16) p.x = W + 16;
+      if(p.x > W + 16) p.x = -16;
+      if(p.y < -16) p.y = H + 16;
+      if(p.y > H + 16) p.y = -16;
 
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-      ctx.fillStyle = `rgba(120,180,255,${alpha})`;
-      ctx.fill();
+      const s = p.s;
+
+      // ① 外側の“にじみ”四角（ちょい大きく、薄く）
+      ctx.fillStyle = `rgba(120,180,255,${alpha * 0.55})`;
+      ctx.fillRect(p.x - s*0.9, p.y - s*0.9, s*1.8, s*1.8);
+
+      // ② 内側の“芯”四角（小さく、濃く）
+      ctx.shadowBlur = 8; // 芯は少しシャープ
+      ctx.fillStyle = `rgba(210,240,255,${alpha * 0.95})`;
+      ctx.fillRect(p.x - s*0.45, p.y - s*0.45, s*0.9, s*0.9);
+
+      // 次ループ用に戻す
+      ctx.shadowBlur = 18;
     }
 
     requestAnimationFrame(step);
   }
+
+  // 初期は透明から積み上げ
+  ctx.clearRect(0,0,W,H);
   step();
 })();
 </script>
+
 </body>
 </html>
