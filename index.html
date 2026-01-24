@@ -26,7 +26,9 @@
 
       /* ★メニュー全体を下げたいときの微調整（px） */
       --menuShiftY: 80px; /* ← ここを増やすともっと下へ */
-      /* 例）60px / 100px / 140px など */
+
+      /* ★メニュー文字だけ“少し下げる”量（グリッチ中も含めて固定） */
+      --labelShiftY: 6px; /* ← ここを変えると文字だけ上下 */
     }
 
     *{ box-sizing:border-box; }
@@ -63,16 +65,16 @@
     }
 
     /* =========================================================
-      3) タイトル（※1.5倍は無し＝元サイズ）
+      3) タイトル（元サイズ）
     ========================================================= */
     .title-area{
       width:min(980px, 92vw);
       text-align:center;
-      margin-top: clamp(42px, 8vh, 80px); /* タイトル位置 */
+      margin-top: clamp(42px, 8vh, 80px);
     }
 
     .title{
-      font-size: clamp(44px, 8vw, 86px); /* ← 元のサイズ */
+      font-size: clamp(44px, 8vw, 86px);
       letter-spacing: .22em;
       font-weight: 300;
       color: rgba(234,242,255,.95);
@@ -91,11 +93,8 @@
 
     /* =========================================================
       4) メニュー（全体位置を下げる）
-      - 今回の主変更：margin-topを増やし、さらに var(--menuShiftY)で下げる
-      - クリック範囲やグリッチ挙動は壊さない方法です
     ========================================================= */
     .menu{
-      /* 元の値をベースに、さらに下へ */
       margin-top: calc(clamp(40px, 10vh, 90px) + var(--menuShiftY));
       display:flex;
       flex-direction:column;
@@ -118,19 +117,18 @@
       text-align: center;
     }
 
-    /* 実際の表示文字は疑似要素で描画（センタリング安定） */
+    /* =========================================================
+      文字描画のコア
+      - 通常時：translateY(var(--labelShiftY)) で下げる
+      - グリッチ時：baseShake側にも同じ下げ量を含めてズレ防止
+    ========================================================= */
     .menu-item .label{
       position:relative;
       display:block;
       height:1.2em;
       line-height:1.2em;
       color: transparent;
-      transform: translateZ(0);
-
-      /* ▼「文字だけちょい下げ」の微調整（必要なら触る）
-         例）0px / 4px / 6px など
-      */
-      transform: translateZ(0) translateY(6px);
+      transform: translateZ(0) translateY(var(--labelShiftY));
     }
 
     /* 通常表示テキスト */
@@ -179,10 +177,12 @@
       100%{ transform: translateX(-50%) translate(0,0); }
     }
 
+    /* ★ここがズレ解消の本体：
+       baseShake の transform にも translateY(var(--labelShiftY)) を常に含める */
     @keyframes baseShake{
-      0%{ transform: translate(0,0); }
-      50%{ transform: translate(-1px,1px); }
-      100%{ transform: translate(0,0); }
+      0%{ transform: translateY(var(--labelShiftY)) translate(0,0); }
+      50%{ transform: translateY(var(--labelShiftY)) translate(-1px,1px); }
+      100%{ transform: translateY(var(--labelShiftY)) translate(0,0); }
     }
 
     /* 操作ヒント */
@@ -202,8 +202,10 @@
       .menu-item{ font-size: 18px; min-width: 16ch; }
       .title{ letter-spacing:.16em; }
 
-      /* スマホは下げすぎると見切れるので少し控えめに */
-      :root{ --menuShiftY: 60px; }
+      :root{
+        --menuShiftY: 60px;
+        --labelShiftY: 6px;
+      }
     }
   </style>
 </head>
@@ -244,8 +246,6 @@
   <script>
   /* =========================================================
     5) メニュー・グリッチ
-    - hover開始で英字に切り替え
-    - その瞬間だけ1回グリッチ（ランダム文字）
   ========================================================= */
   (() => {
     const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -277,7 +277,6 @@
         btn.classList.add("is-alt","is-glitch");
         label.dataset.displayText = alt;
         glitchOnce(alt, 200);
-
         setTimeout(() => btn.classList.remove("is-glitch"), 260);
       });
 
@@ -293,11 +292,6 @@
   <script>
   /* =========================================================
     6) ドット調・浮遊パーティクル（軽量 / 軌跡なし / 四角）
-    調整したいときのポイント：
-      - 粒数：count の min/max
-      - 粒サイズ：s の rand()
-      - 明るさ：fillStyle の rgb と alpha計算
-      - 動き：MAX / TURN / WANDER / DRAG
   ========================================================= */
   (() => {
     const canvas = document.getElementById("dust");
@@ -327,47 +321,38 @@
       const d = rand(0, Math.PI * 2);
       return {
         x: rand(0,W), y: rand(0,H),
-        s: rand(2.0, 5.0),                 // ★粒サイズ
+        s: rand(2.0, 5.0),
         vx: Math.cos(d) * rand(.05, .2),
         vy: Math.sin(d) * rand(.05, .2),
-        a: rand(.1, .26),                   // 基本の明るさ
-        ph: rand(0, Math.PI*2),             // 明滅位相
-        tw: rand(.004, .012),               // 明滅速度
-        dir: d, drift: rand(.6, 1.6)        // ふわふわ用
+        a: rand(.1, .26),
+        ph: rand(0, Math.PI*2),
+        tw: rand(.004, .012),
+        dir: d, drift: rand(.6, 1.6)
       };
     });
 
-    // 動きのパラメータ（ふわふわ感）
     const MAX=.1, TURN=.02, WANDER=.018, DRAG=.992;
 
     function step(){
       ctx.clearRect(0,0,W,H);
 
       for(const p of ps){
-        // 明滅（今の設定：強め。弱めたいなら 0.15 とかに）
         p.ph += p.tw;
         const alpha = p.a + Math.sin(p.ph) * 0.5;
 
-        // ランダムに方向をゆらす（直線回避）
         p.dir += (Math.sin(p.ph*p.drift) + (Math.random() - .05)) * WANDER;
 
-        // 進行方向へ少し寄せる
         p.vx += (Math.cos(p.dir)*MAX - p.vx) * TURN;
         p.vy += (Math.sin(p.dir)*MAX - p.vy) * TURN;
 
-        // 抵抗（惰性）
         p.vx *= DRAG; p.vy *= DRAG;
-
-        // 移動
         p.x += p.vx; p.y += p.vy;
 
-        // 画面外ループ
         if(p.x < -20) p.x = W + 20;
         if(p.x >  W+20) p.x = -20;
         if(p.y < -20) p.y = H + 20;
         if(p.y >  H+20) p.y = -20;
 
-        // 描画（ドット四角）
         ctx.fillStyle = `rgba(150,230,255,${alpha})`;
         ctx.fillRect(p.x - p.s/2, p.y - p.s/2, p.s, p.s);
       }
