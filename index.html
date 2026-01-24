@@ -285,7 +285,7 @@
 
   // 密度
   const baseCount = Math.floor((W * H) / 28000);
-  const count = Math.max(28, Math.min(70, baseCount));
+  const count = Math.max(28, Math.min(50, baseCount));
 
   // “ふわふわ感”の調整つまみ
   const MAX_SPEED = 0.1;      // 上げると漂いが速い
@@ -316,9 +316,7 @@
     ctx.clearRect(0,0,W,H);
 
     // 粒だけ光らせる（背景は変えない）
-    ctx.globalCompositeOperation = "lighter";
-    ctx.shadowColor = "rgba(79,195,255,0.65)";
-    ctx.shadowBlur = 0.1;
+
 
     for(const p of ps){
       // 点滅（呼吸感）
