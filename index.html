@@ -82,17 +82,13 @@
 
     .menu-item{
       position:relative;
-      display:inline-block;
       padding: 6px 18px;
       font-size: 22px;
       letter-spacing: .12em;
-      color: rgba(234,242,255,.85);
       background: transparent;
       border: 0;
       cursor: pointer;
-      outline:none;
       -webkit-tap-highlight-color: transparent;
-      text-shadow: 0 0 18px rgba(0,0,0,.35);
       white-space: nowrap;
       min-width: 14ch;
       text-align: center;
@@ -101,13 +97,10 @@
     .menu-item .label{
       position:relative;
       display:block;
-      width:100%;
-      height: 1.2em;
-      line-height: 1.2em;
+      height:1.2em;
+      line-height:1.2em;
       color: transparent;
-      white-space: nowrap;
       transform: translateZ(0);
-      will-change: transform, filter;
     }
 
     .menu-item .label::after{
@@ -116,7 +109,6 @@
       top:0;
       left:50%;
       transform: translateX(-50%);
-      width: max-content;
       color: var(--menu);
       text-shadow: 0 0 18px rgba(0,0,0,.35);
       pointer-events:none;
@@ -128,38 +120,30 @@
       top:0;
       left:50%;
       transform: translateX(-50%);
-      width: max-content;
       opacity:0;
-      pointer-events:none;
       color: var(--accent2);
       mix-blend-mode: screen;
-      text-shadow:
-        1px 0 rgba(79,195,255,.35),
-        -1px 0 rgba(255,120,180,.18);
       filter: blur(.2px);
+      pointer-events:none;
     }
 
     .menu-item.is-alt .label::after{
       color: var(--accent);
-      text-shadow:
-        0 0 10px rgba(79,195,255,.22),
-        0 0 22px rgba(79,195,255,.14);
     }
 
     .menu-item.is-glitch .label::before{
-      opacity: 1;
+      opacity:1;
       animation: glitchJitter 120ms steps(2,end) infinite;
     }
 
     .menu-item.is-glitch .label{
       animation: baseShake 90ms steps(2,end) infinite;
-      filter: saturate(1.2);
     }
 
     @keyframes glitchJitter{
-      0%   { transform: translateX(-50%) translate(0,0); }
-      50%  { transform: translateX(-50%) translate(2px,-1px); }
-      100% { transform: translateX(-50%) translate(0,0); }
+      0%{ transform: translateX(-50%) translate(0,0); }
+      50%{ transform: translateX(-50%) translate(2px,-1px); }
+      100%{ transform: translateX(-50%) translate(0,0); }
     }
 
     @keyframes baseShake{
@@ -170,201 +154,126 @@
 
     .hint{
       position:fixed;
-      bottom: 22px;
+      bottom:22px;
       left:50%;
       transform: translateX(-50%);
       color: rgba(234,242,255,.30);
-      font-size: 12px;
+      font-size:12px;
       letter-spacing:.18em;
       pointer-events:none;
-    }
-
-    @media (max-width:520px){
-      .menu-item{ font-size: 18px; min-width: 16ch; }
-      .title{ letter-spacing:.16em; }
     }
   </style>
 </head>
 
 <body>
-  <canvas id="dust"></canvas>
+<canvas id="dust"></canvas>
 
-  <div class="wrap">
-    <div class="title-area">
-      <h1 class="title">虚構幻想</h1>
-      <div class="title-line"></div>
-    </div>
-
-    <div class="menu">
-      <button class="menu-item" data-original="はじめから" data-alt="- WEB TOP -">
-        <span class="label" data-display-text="はじめから"></span>
-      </button>
-      <button class="menu-item" data-original="作品紹介" data-alt="- WORKS -">
-        <span class="label" data-display-text="作品紹介"></span>
-      </button>
-      <button class="menu-item" data-original="ギャラリー" data-alt="- GALLERY -">
-        <span class="label" data-display-text="ギャラリー"></span>
-      </button>
-      <button class="menu-item" data-original="メンバー" data-alt="- MEMBERS -">
-        <span class="label" data-display-text="メンバー"></span>
-      </button>
-      <button class="menu-item" data-original="依頼" data-alt="- CONTACT -">
-        <span class="label" data-display-text="依頼"></span>
-      </button>
-    </div>
+<div class="wrap">
+  <div class="title-area">
+    <h1 class="title">虚構幻想</h1>
+    <div class="title-line"></div>
   </div>
 
-  <div class="hint">MOVE CURSOR</div>
+  <div class="menu">
+    <button class="menu-item" data-original="はじめから" data-alt="- WEB TOP -"><span class="label" data-display-text="はじめから"></span></button>
+    <button class="menu-item" data-original="作品紹介" data-alt="- WORKS -"><span class="label" data-display-text="作品紹介"></span></button>
+    <button class="menu-item" data-original="ギャラリー" data-alt="- GALLERY -"><span class="label" data-display-text="ギャラリー"></span></button>
+    <button class="menu-item" data-original="メンバー" data-alt="- MEMBERS -"><span class="label" data-display-text="メンバー"></span></button>
+    <button class="menu-item" data-original="依頼" data-alt="- CONTACT -"><span class="label" data-display-text="依頼"></span></button>
+  </div>
+</div>
+
+<div class="hint">MOVE CURSOR</div>
 
 <script>
 /* メニュー・グリッチ */
 (() => {
-  const items = document.querySelectorAll(".menu-item");
-  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const letters="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  document.querySelectorAll(".menu-item").forEach(btn=>{
+    const label=btn.querySelector(".label");
+    const {original,alt}=btn.dataset;
 
-  function glitchOnce(label, target, duration = 200) {
-    const start = performance.now();
-    const len = target.length;
-    function frame(now){
-      const t = Math.min(1, (now - start) / duration);
-      const reveal = Math.floor(len * t);
-      let out = "";
-      for(let i=0;i<len;i++){
-        out += i < reveal ? target[i] : letters[(Math.random()*letters.length)|0];
-      }
-      label.dataset.glitchText = out;
-      if(t < 1) requestAnimationFrame(frame);
-      else label.dataset.glitchText = "";
+    function glitch(t){
+      const start=performance.now(),len=t.length;
+      (function f(n){
+        const p=Math.min(1,(n-start)/200);
+        label.dataset.glitchText=[...t].map((c,i)=>i<p*len?c:letters[Math.random()*letters.length|0]).join("");
+        p<1?requestAnimationFrame(f):label.dataset.glitchText="";
+      })(start);
     }
-    requestAnimationFrame(frame);
-  }
 
-  items.forEach(btn=>{
-    const label = btn.querySelector(".label");
-    const original = btn.dataset.original;
-    const alt = btn.dataset.alt;
-
-    btn.addEventListener("mouseenter", ()=>{
+    btn.addEventListener("mouseenter",()=>{
       btn.classList.add("is-alt","is-glitch");
-      label.dataset.displayText = alt;
-      glitchOnce(label, alt);
+      label.dataset.displayText=alt;
+      glitch(alt);
       setTimeout(()=>btn.classList.remove("is-glitch"),260);
     });
 
-    btn.addEventListener("mouseleave", ()=>{
+    btn.addEventListener("mouseleave",()=>{
       btn.classList.remove("is-alt","is-glitch");
-      label.dataset.displayText = original;
-      label.dataset.glitchText = "";
+      label.dataset.displayText=original;
+      label.dataset.glitchText="";
     });
   });
 })();
 </script>
 
 <script>
-/* 埃パーティクル（軌跡なし／ふわふわランダム／四角／発光強め） */
+/* ドット調・浮遊パーティクル（軌跡なし） */
 (() => {
-  const canvas = document.getElementById("dust");
-  const ctx = canvas.getContext("2d", { alpha:true });
-
-  const DPR = Math.min(2, window.devicePixelRatio || 1);
-  let W = 0, H = 0;
+  const c=document.getElementById("dust");
+  const x=c.getContext("2d");
+  const DPR=Math.min(2,devicePixelRatio||1);
+  let W,H;
 
   function resize(){
-    W = window.innerWidth;
-    H = window.innerHeight;
-    canvas.width = Math.floor(W * DPR);
-    canvas.height = Math.floor(H * DPR);
-    canvas.style.width = W + "px";
-    canvas.style.height = H + "px";
-    ctx.setTransform(DPR,0,0,DPR,0,0);
+    W=innerWidth;H=innerHeight;
+    c.width=W*DPR;c.height=H*DPR;
+    c.style.width=W+"px";c.style.height=H+"px";
+    x.setTransform(DPR,0,0,DPR,0,0);
   }
-  window.addEventListener("resize", resize, { passive:true });
-  resize();
+  addEventListener("resize",resize);resize();
 
-  const rand = (a,b)=>a+Math.random()*(b-a);
+  const rand=(a,b)=>a+Math.random()*(b-a);
+  const count=Math.max(28,Math.min(60,(W*H)/28000|0));
 
-  // 密度
-  const baseCount = Math.floor((W * H) / 28000);
-  const count = Math.max(28, Math.min(50, baseCount));
+  const ps=[...Array(count)].map(()=>{
+    const d=rand(0,Math.PI*2);
+    return{
+      x:rand(0,W),y:rand(0,H),
+      s:rand(5.0,5.0),
+      vx:Math.cos(d)*rand(.05,.2),
+      vy:Math.sin(d)*rand(.05,.2),
+      a:rand(.1,.26),ph:rand(0,Math.PI*2),
+      tw:rand(.004,.012),dir:d,drift:rand(.6,1.6)
+    };
+  });
 
-  // “ふわふわ感”の調整つまみ
-  const MAX_SPEED = 0.1;      // 上げると漂いが速い
-  const TURN = 0.020;          // 上げると曲がりやすい（直線感が消える）
-  const WANDER = 0.018;        // 上げるとランダム感が強い
-  const DRAG = 0.992;          // 1に近いほど惰性が残る（0.985〜0.996が使いやすい）
-
-  const ps = [];
-  for(let i=0;i<count;i++){
-    const angle = rand(0, Math.PI * 2);
-    ps.push({
-      x: rand(0,W),
-      y: rand(0,H),
-      s: rand(1.2, 3.2),       // 四角サイズ
-      vx: Math.cos(angle) * rand(0.05, 0.20),
-      vy: Math.sin(angle) * rand(0.05, 0.20),
-      a: rand(0.10, 0.26),     // 基本の明るさ
-      tw: rand(0.004, 0.012),  // 点滅速度
-      ph: rand(0, Math.PI*2),
-      // “方向のゆらぎ”用
-      dir: angle,
-      drift: rand(0.6, 1.6),
-    });
-  }
+  const MAX=.1,TURN=.02,WANDER=.018,DRAG=.992;
 
   function step(){
-    // ★軌跡なし：毎フレーム完全クリア
-    ctx.clearRect(0,0,W,H);
-
+    x.clearRect(0,0,W,H);
     for(const p of ps){
-      // 点滅（呼吸感）
-      p.ph += p.tw;
-      const alpha = Math.max(0, p.a + Math.sin(p.ph) * 0.05);
+      p.ph+=p.tw;
+      const alpha=p.a+Math.sin(p.ph)*0.5;
+      p.dir+=(Math.sin(p.ph*p.drift)+(Math.random()-.05))*WANDER;
+      p.vx+=(Math.cos(p.dir)*MAX-p.vx)*TURN;
+      p.vy+=(Math.sin(p.dir)*MAX-p.vy)*TURN;
+      p.vx*=DRAG;p.vy*=DRAG;
+      p.x+=p.vx;p.y+=p.vy;
 
-      // “直線”にならないように：方向を常にゆらがせて曲げる
-      const noise = (Math.sin(p.ph * p.drift) + (Math.random() - 0.05)) * WANDER;
-      p.dir += noise;
+      if(p.x<-20)p.x=W+20;if(p.x>W+20)p.x=-20;
+      if(p.y<-20)p.y=H+20;if(p.y>H+20)p.y=-20;
 
-      // 速度ベクトルを “少しだけ” 進行方向へ寄せる（TURNで曲がりやすさ）
-      const tx = Math.cos(p.dir) * MAX_SPEED;
-      const ty = Math.sin(p.dir) * MAX_SPEED;
-
-      p.vx += (tx - p.vx) * TURN;
-      p.vy += (ty - p.vy) * TURN;
-
-      // 抵抗（ふわっと）
-      p.vx *= DRAG;
-      p.vy *= DRAG;
-
-      p.x += p.vx;
-      p.y += p.vy;
-
-      // 画面外ループ
-      if(p.x < -20) p.x = W + 20;
-      if(p.x > W + 20) p.x = -20;
-      if(p.y < -20) p.y = H + 20;
-      if(p.y > H + 20) p.y = -20;
-
-      // ① グロー（少し大きめ・薄め）
-      ctx.fillStyle = `rgba(120,180,255,${alpha * 1})`;
-      ctx.fillRect(p.x - p.s*0.9, p.y - p.s*0.9, p.s*1.8, p.s*1.8);
-
-      // ② コア（小さめ・濃いめ）
-      ctx.shadowBlur = 1;
-      ctx.fillStyle = `rgba(220,245,255,${alpha * 0.95})`;
-      ctx.fillRect(p.x - p.s*0.45, p.y - p.s*0.45, p.s*0.9, p.s*0.9);
-
-      ctx.shadowBlur = 0.1;
+      x.fillStyle=`rgba(150,230,255,${alpha})`;
+      x.fillRect(p.x-p.s/2,p.y-p.s/2,p.s,p.s);
     }
-
-    // 戻す（念のため）
-    ctx.globalCompositeOperation = "source-over";
-
     requestAnimationFrame(step);
   }
-
   step();
 })();
 </script>
 
 </body>
 </html>
+
