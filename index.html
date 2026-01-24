@@ -6,20 +6,35 @@
   <title>虚構幻想</title>
 
   <style>
+    /* =========================================================
+      1) テーマ変数（色・全体の調整ポイント）
+      ここを触ると、サイト全体の雰囲気が一括で変わります。
+    ========================================================= */
     :root{
       --bg:#000;
       --fg:#eaf2ff;
-      --muted:rgba(234,242,255,.70);
       --line:rgba(234,242,255,.18);
 
+      /* メニュー通常色 */
       --menu:#a8e3df;
+
+      /* ホバー時（英字側）の色 */
       --accent:#4fc3ff;
+
+      /* グリッチ色 */
       --accent2:#a7e7ff;
+
+      /* ★メニュー全体を下げたいときの微調整（px） */
+      --menuShiftY: 80px; /* ← ここを増やすともっと下へ */
+      /* 例）60px / 100px / 140px など */
     }
 
     *{ box-sizing:border-box; }
     html,body{ height:100%; }
 
+    /* =========================================================
+      2) 背景・全体レイアウト
+    ========================================================= */
     body{
       margin:0;
       background:
@@ -31,15 +46,15 @@
       overflow:hidden;
     }
 
+    /* 背景パーティクル（canvas） */
     #dust{
       position:fixed;
       inset:0;
-      width:100%;
-      height:100%;
       z-index:-1;
       pointer-events:none;
     }
 
+    /* 縦積みレイアウト */
     .wrap{
       min-height:100%;
       display:flex;
@@ -47,14 +62,17 @@
       align-items:center;
     }
 
+    /* =========================================================
+      3) タイトル（※1.5倍は無し＝元サイズ）
+    ========================================================= */
     .title-area{
       width:min(980px, 92vw);
       text-align:center;
-      margin-top: clamp(42px, 8vh, 80px);
+      margin-top: clamp(42px, 8vh, 80px); /* タイトル位置 */
     }
 
     .title{
-      font-size: clamp(44px, 8vw, 86px);
+      font-size: clamp(44px, 8vw, 86px); /* ← 元のサイズ */
       letter-spacing: .22em;
       font-weight: 300;
       color: rgba(234,242,255,.95);
@@ -71,8 +89,14 @@
       background: linear-gradient(90deg, transparent, var(--line), transparent);
     }
 
+    /* =========================================================
+      4) メニュー（全体位置を下げる）
+      - 今回の主変更：margin-topを増やし、さらに var(--menuShiftY)で下げる
+      - クリック範囲やグリッチ挙動は壊さない方法です
+    ========================================================= */
     .menu{
-      margin-top: clamp(40px, 10vh, 90px);
+      /* 元の値をベースに、さらに下へ */
+      margin-top: calc(clamp(40px, 10vh, 90px) + var(--menuShiftY));
       display:flex;
       flex-direction:column;
       gap: 18px;
@@ -94,6 +118,7 @@
       text-align: center;
     }
 
+    /* 実際の表示文字は疑似要素で描画（センタリング安定） */
     .menu-item .label{
       position:relative;
       display:block;
@@ -101,8 +126,14 @@
       line-height:1.2em;
       color: transparent;
       transform: translateZ(0);
+
+      /* ▼「文字だけちょい下げ」の微調整（必要なら触る）
+         例）0px / 4px / 6px など
+      */
+      transform: translateZ(0) translateY(6px);
     }
 
+    /* 通常表示テキスト */
     .menu-item .label::after{
       content: attr(data-display-text);
       position:absolute;
@@ -114,6 +145,7 @@
       pointer-events:none;
     }
 
+    /* グリッチ表示テキスト */
     .menu-item .label::before{
       content: attr(data-glitch-text);
       position:absolute;
@@ -127,15 +159,16 @@
       pointer-events:none;
     }
 
+    /* ホバー中（英字ラベルの色） */
     .menu-item.is-alt .label::after{
       color: var(--accent);
     }
 
+    /* グリッチ中 */
     .menu-item.is-glitch .label::before{
       opacity:1;
       animation: glitchJitter 120ms steps(2,end) infinite;
     }
-
     .menu-item.is-glitch .label{
       animation: baseShake 90ms steps(2,end) infinite;
     }
@@ -152,6 +185,7 @@
       100%{ transform: translate(0,0); }
     }
 
+    /* 操作ヒント */
     .hint{
       position:fixed;
       bottom:22px;
@@ -162,118 +196,186 @@
       letter-spacing:.18em;
       pointer-events:none;
     }
+
+    /* スマホ調整 */
+    @media (max-width:520px){
+      .menu-item{ font-size: 18px; min-width: 16ch; }
+      .title{ letter-spacing:.16em; }
+
+      /* スマホは下げすぎると見切れるので少し控えめに */
+      :root{ --menuShiftY: 60px; }
+    }
   </style>
 </head>
 
 <body>
-<canvas id="dust"></canvas>
+  <!-- 背景パーティクル -->
+  <canvas id="dust"></canvas>
 
-<div class="wrap">
-  <div class="title-area">
-    <h1 class="title">虚構幻想</h1>
-    <div class="title-line"></div>
+  <div class="wrap">
+    <!-- タイトル -->
+    <div class="title-area">
+      <h1 class="title">虚構幻想</h1>
+      <div class="title-line"></div>
+    </div>
+
+    <!-- メニュー -->
+    <div class="menu">
+      <button class="menu-item" data-original="はじめから" data-alt="- WEB TOP -">
+        <span class="label" data-display-text="はじめから"></span>
+      </button>
+      <button class="menu-item" data-original="作品紹介" data-alt="- WORKS -">
+        <span class="label" data-display-text="作品紹介"></span>
+      </button>
+      <button class="menu-item" data-original="ギャラリー" data-alt="- GALLERY -">
+        <span class="label" data-display-text="ギャラリー"></span>
+      </button>
+      <button class="menu-item" data-original="メンバー" data-alt="- MEMBERS -">
+        <span class="label" data-display-text="メンバー"></span>
+      </button>
+      <button class="menu-item" data-original="依頼" data-alt="- CONTACT -">
+        <span class="label" data-display-text="依頼"></span>
+      </button>
+    </div>
   </div>
 
-  <div class="menu">
-    <button class="menu-item" data-original="はじめから" data-alt="- WEB TOP -"><span class="label" data-display-text="はじめから"></span></button>
-    <button class="menu-item" data-original="作品紹介" data-alt="- WORKS -"><span class="label" data-display-text="作品紹介"></span></button>
-    <button class="menu-item" data-original="ギャラリー" data-alt="- GALLERY -"><span class="label" data-display-text="ギャラリー"></span></button>
-    <button class="menu-item" data-original="メンバー" data-alt="- MEMBERS -"><span class="label" data-display-text="メンバー"></span></button>
-    <button class="menu-item" data-original="依頼" data-alt="- CONTACT -"><span class="label" data-display-text="依頼"></span></button>
-  </div>
-</div>
+  <div class="hint">MOVE CURSOR</div>
 
-<div class="hint">MOVE CURSOR</div>
+  <script>
+  /* =========================================================
+    5) メニュー・グリッチ
+    - hover開始で英字に切り替え
+    - その瞬間だけ1回グリッチ（ランダム文字）
+  ========================================================= */
+  (() => {
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    document.querySelectorAll(".menu-item").forEach(btn => {
+      const label = btn.querySelector(".label");
+      const { original, alt } = btn.dataset;
 
-<script>
-/* メニュー・グリッチ */
-(() => {
-  const letters="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  document.querySelectorAll(".menu-item").forEach(btn=>{
-    const label=btn.querySelector(".label");
-    const {original,alt}=btn.dataset;
+      function glitchOnce(text, duration = 200){
+        const start = performance.now();
+        const len = text.length;
 
-    function glitch(t){
-      const start=performance.now(),len=t.length;
-      (function f(n){
-        const p=Math.min(1,(n-start)/200);
-        label.dataset.glitchText=[...t].map((c,i)=>i<p*len?c:letters[Math.random()*letters.length|0]).join("");
-        p<1?requestAnimationFrame(f):label.dataset.glitchText="";
-      })(start);
+        function frame(now){
+          const t = Math.min(1, (now - start) / duration);
+          const reveal = Math.floor(len * t);
+
+          let out = "";
+          for(let i=0;i<len;i++){
+            out += (i < reveal) ? text[i] : letters[(Math.random()*letters.length)|0];
+          }
+          label.dataset.glitchText = out;
+
+          if(t < 1) requestAnimationFrame(frame);
+          else label.dataset.glitchText = "";
+        }
+        requestAnimationFrame(frame);
+      }
+
+      btn.addEventListener("mouseenter", () => {
+        btn.classList.add("is-alt","is-glitch");
+        label.dataset.displayText = alt;
+        glitchOnce(alt, 200);
+
+        setTimeout(() => btn.classList.remove("is-glitch"), 260);
+      });
+
+      btn.addEventListener("mouseleave", () => {
+        btn.classList.remove("is-alt","is-glitch");
+        label.dataset.displayText = original;
+        label.dataset.glitchText = "";
+      });
+    });
+  })();
+  </script>
+
+  <script>
+  /* =========================================================
+    6) ドット調・浮遊パーティクル（軽量 / 軌跡なし / 四角）
+    調整したいときのポイント：
+      - 粒数：count の min/max
+      - 粒サイズ：s の rand()
+      - 明るさ：fillStyle の rgb と alpha計算
+      - 動き：MAX / TURN / WANDER / DRAG
+  ========================================================= */
+  (() => {
+    const canvas = document.getElementById("dust");
+    const ctx = canvas.getContext("2d", { alpha:true });
+
+    const DPR = Math.min(2, window.devicePixelRatio || 1);
+    let W = 0, H = 0;
+
+    function resize(){
+      W = innerWidth; H = innerHeight;
+      canvas.width  = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      canvas.style.width  = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(DPR,0,0,DPR,0,0);
     }
+    addEventListener("resize", resize, { passive:true });
+    resize();
 
-    btn.addEventListener("mouseenter",()=>{
-      btn.classList.add("is-alt","is-glitch");
-      label.dataset.displayText=alt;
-      glitch(alt);
-      setTimeout(()=>btn.classList.remove("is-glitch"),260);
+    const rand = (a,b)=>a+Math.random()*(b-a);
+
+    // 粒数（軽さ重視：上限60）
+    const count = Math.max(28, Math.min(60, (W*H)/28000 | 0));
+
+    // 粒データ
+    const ps = [...Array(count)].map(() => {
+      const d = rand(0, Math.PI * 2);
+      return {
+        x: rand(0,W), y: rand(0,H),
+        s: rand(2.0, 5.0),                 // ★粒サイズ
+        vx: Math.cos(d) * rand(.05, .2),
+        vy: Math.sin(d) * rand(.05, .2),
+        a: rand(.1, .26),                   // 基本の明るさ
+        ph: rand(0, Math.PI*2),             // 明滅位相
+        tw: rand(.004, .012),               // 明滅速度
+        dir: d, drift: rand(.6, 1.6)        // ふわふわ用
+      };
     });
 
-    btn.addEventListener("mouseleave",()=>{
-      btn.classList.remove("is-alt","is-glitch");
-      label.dataset.displayText=original;
-      label.dataset.glitchText="";
-    });
-  });
-})();
-</script>
+    // 動きのパラメータ（ふわふわ感）
+    const MAX=.1, TURN=.02, WANDER=.018, DRAG=.992;
 
-<script>
-/* ドット調・浮遊パーティクル（軌跡なし） */
-(() => {
-  const c=document.getElementById("dust");
-  const x=c.getContext("2d");
-  const DPR=Math.min(2,devicePixelRatio||1);
-  let W,H;
+    function step(){
+      ctx.clearRect(0,0,W,H);
 
-  function resize(){
-    W=innerWidth;H=innerHeight;
-    c.width=W*DPR;c.height=H*DPR;
-    c.style.width=W+"px";c.style.height=H+"px";
-    x.setTransform(DPR,0,0,DPR,0,0);
-  }
-  addEventListener("resize",resize);resize();
+      for(const p of ps){
+        // 明滅（今の設定：強め。弱めたいなら 0.15 とかに）
+        p.ph += p.tw;
+        const alpha = p.a + Math.sin(p.ph) * 0.5;
 
-  const rand=(a,b)=>a+Math.random()*(b-a);
-  const count=Math.max(28,Math.min(60,(W*H)/28000|0));
+        // ランダムに方向をゆらす（直線回避）
+        p.dir += (Math.sin(p.ph*p.drift) + (Math.random() - .05)) * WANDER;
 
-  const ps=[...Array(count)].map(()=>{
-    const d=rand(0,Math.PI*2);
-    return{
-      x:rand(0,W),y:rand(0,H),
-      s:rand(2.0,5.0),
-      vx:Math.cos(d)*rand(.05,.2),
-      vy:Math.sin(d)*rand(.05,.2),
-      a:rand(.1,.26),ph:rand(0,Math.PI*2),
-      tw:rand(.004,.012),dir:d,drift:rand(.6,1.6)
-    };
-  });
+        // 進行方向へ少し寄せる
+        p.vx += (Math.cos(p.dir)*MAX - p.vx) * TURN;
+        p.vy += (Math.sin(p.dir)*MAX - p.vy) * TURN;
 
-  const MAX=.1,TURN=.02,WANDER=.018,DRAG=.992;
+        // 抵抗（惰性）
+        p.vx *= DRAG; p.vy *= DRAG;
 
-  function step(){
-    x.clearRect(0,0,W,H);
-    for(const p of ps){
-      p.ph+=p.tw;
-      const alpha=p.a+Math.sin(p.ph)*0.5;
-      p.dir+=(Math.sin(p.ph*p.drift)+(Math.random()-.05))*WANDER;
-      p.vx+=(Math.cos(p.dir)*MAX-p.vx)*TURN;
-      p.vy+=(Math.sin(p.dir)*MAX-p.vy)*TURN;
-      p.vx*=DRAG;p.vy*=DRAG;
-      p.x+=p.vx;p.y+=p.vy;
+        // 移動
+        p.x += p.vx; p.y += p.vy;
 
-      if(p.x<-20)p.x=W+20;if(p.x>W+20)p.x=-20;
-      if(p.y<-20)p.y=H+20;if(p.y>H+20)p.y=-20;
+        // 画面外ループ
+        if(p.x < -20) p.x = W + 20;
+        if(p.x >  W+20) p.x = -20;
+        if(p.y < -20) p.y = H + 20;
+        if(p.y >  H+20) p.y = -20;
 
-      x.fillStyle=`rgba(150,230,255,${alpha})`;
-      x.fillRect(p.x-p.s/2,p.y-p.s/2,p.s,p.s);
+        // 描画（ドット四角）
+        ctx.fillStyle = `rgba(150,230,255,${alpha})`;
+        ctx.fillRect(p.x - p.s/2, p.y - p.s/2, p.s, p.s);
+      }
+
+      requestAnimationFrame(step);
     }
-    requestAnimationFrame(step);
-  }
-  step();
-})();
-</script>
-
+    step();
+  })();
+  </script>
 </body>
 </html>
-
