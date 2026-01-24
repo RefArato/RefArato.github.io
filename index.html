@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>虚構幻想</title>
+
   <style>
     :root{
       --bg:#000;
@@ -11,6 +12,7 @@
       --muted:rgba(234,242,255,.70);
       --line:rgba(234,242,255,.18);
 
+      --menu:#a8e3df;
       --accent:#4fc3ff;
       --accent2:#a7e7ff;
     }
@@ -50,6 +52,7 @@
       text-align:center;
       margin-top: clamp(42px, 8vh, 80px);
     }
+
     .title{
       font-size: clamp(44px, 8vw, 86px);
       letter-spacing: .22em;
@@ -60,6 +63,7 @@
         0 0 26px rgba(79,195,255,.12);
       margin:0;
     }
+
     .title-line{
       width:min(640px, 74vw);
       height:1px;
@@ -89,13 +93,11 @@
       outline:none;
       -webkit-tap-highlight-color: transparent;
       text-shadow: 0 0 18px rgba(0,0,0,.35);
-
       white-space: nowrap;
       min-width: 14ch;
       text-align: center;
     }
 
-    /* ラベル：実テキストは隠して、描画は疑似要素に統一 */
     .menu-item .label{
       position:relative;
       display:block;
@@ -103,37 +105,23 @@
       height: 1.2em;
       line-height: 1.2em;
       color: transparent;
-
       white-space: nowrap;
-      overflow-wrap: normal;
-      word-break: keep-all;
-
       transform: translateZ(0);
       will-change: transform, filter;
     }
 
-    /* ★ここが今回の本修正：
-       “箱の中央”ではなく “文字幅の中央”で配置する */
     .menu-item .label::after{
       content: attr(data-display-text);
       position:absolute;
       top:0;
       left:50%;
-      transform: translateX(-50%); /* ← 文字自体の中心で固定 */
+      transform: translateX(-50%);
       width: max-content;
-      height:100%;
-      opacity:1;
-      pointer-events:none;
-
-      color: rgba(234,242,255,.85);
+      color: var(--menu);
       text-shadow: 0 0 18px rgba(0,0,0,.35);
-
-      white-space: nowrap;
-      overflow-wrap: normal;
-      word-break: keep-all;
+      pointer-events:none;
     }
 
-    /* グリッチ用オーバーレイも同じ中央基準に */
     .menu-item .label::before{
       content: attr(data-glitch-text);
       position:absolute;
@@ -141,23 +129,16 @@
       left:50%;
       transform: translateX(-50%);
       width: max-content;
-      height:100%;
       opacity:0;
       pointer-events:none;
-
       color: var(--accent2);
       mix-blend-mode: screen;
       text-shadow:
         1px 0 rgba(79,195,255,.35),
         -1px 0 rgba(255,120,180,.18);
       filter: blur(.2px);
-
-      white-space: nowrap;
-      overflow-wrap: normal;
-      word-break: keep-all;
     }
 
-    /* ホバー中：色だけアクセントへ */
     .menu-item.is-alt .label::after{
       color: var(--accent);
       text-shadow:
@@ -165,34 +146,26 @@
         0 0 22px rgba(79,195,255,.14);
     }
 
-    /* グリッチ中（短時間だけ）
-       ※ transform は“jitter用”に上書きされるけど、
-       最初に translateX(-50%) で中央が取れているので見た目が安定します */
     .menu-item.is-glitch .label::before{
       opacity: 1;
       animation: glitchJitter 120ms steps(2,end) infinite;
     }
+
     .menu-item.is-glitch .label{
       animation: baseShake 90ms steps(2,end) infinite;
       filter: saturate(1.2);
     }
 
     @keyframes glitchJitter{
-      0%   { transform: translateX(-50%) translate(0,0) skewX(0deg); clip-path: inset(0 0 0 0); }
-      15%  { transform: translateX(-50%) translate(2px,-1px) skewX(6deg); clip-path: inset(12% 0 62% 0); }
-      30%  { transform: translateX(-50%) translate(-2px,1px) skewX(-8deg); clip-path: inset(46% 0 28% 0); }
-      45%  { transform: translateX(-50%) translate(3px,0) skewX(10deg); clip-path: inset(70% 0 8% 0); }
-      60%  { transform: translateX(-50%) translate(-3px,-1px) skewX(-10deg); clip-path: inset(22% 0 52% 0); }
-      75%  { transform: translateX(-50%) translate(1px,2px) skewX(6deg); clip-path: inset(58% 0 16% 0); }
-      100% { transform: translateX(-50%) translate(0,-2px) skewX(0deg); clip-path: inset(0 0 0 0); }
+      0%   { transform: translateX(-50%) translate(0,0); }
+      50%  { transform: translateX(-50%) translate(2px,-1px); }
+      100% { transform: translateX(-50%) translate(0,0); }
     }
 
     @keyframes baseShake{
       0%{ transform: translate(0,0); }
-      25%{ transform: translate(-1px,0); }
-      50%{ transform: translate(1px,-1px); }
-      75%{ transform: translate(0,1px); }
-      100%{ transform: translate(-1px,-1px); }
+      50%{ transform: translate(-1px,1px); }
+      100%{ transform: translate(0,0); }
     }
 
     .hint{
@@ -212,6 +185,7 @@
     }
   </style>
 </head>
+
 <body>
   <canvas id="dust"></canvas>
 
@@ -221,25 +195,21 @@
       <div class="title-line"></div>
     </div>
 
-    <div class="menu" role="navigation" aria-label="Site menu">
-      <button class="menu-item" type="button" data-original="はじめから" data-alt="- WEB TOP -">
-        <span class="label" data-display-text="はじめから" data-glitch-text="">はじめから</span>
+    <div class="menu">
+      <button class="menu-item" data-original="はじめから" data-alt="- WEB TOP -">
+        <span class="label" data-display-text="はじめから"></span>
       </button>
-
-      <button class="menu-item" type="button" data-original="作品紹介" data-alt="- WORKS -">
-        <span class="label" data-display-text="作品紹介" data-glitch-text="">作品紹介</span>
+      <button class="menu-item" data-original="作品紹介" data-alt="- WORKS -">
+        <span class="label" data-display-text="作品紹介"></span>
       </button>
-
-      <button class="menu-item" type="button" data-original="ギャラリー" data-alt="- GALLERY -">
-        <span class="label" data-display-text="ギャラリー" data-glitch-text="">ギャラリー</span>
+      <button class="menu-item" data-original="ギャラリー" data-alt="- GALLERY -">
+        <span class="label" data-display-text="ギャラリー"></span>
       </button>
-
-      <button class="menu-item" type="button" data-original="メンバー" data-alt="- MEMBERS -">
-        <span class="label" data-display-text="メンバー" data-glitch-text="">メンバー</span>
+      <button class="menu-item" data-original="メンバー" data-alt="- MEMBERS -">
+        <span class="label" data-display-text="メンバー"></span>
       </button>
-
-      <button class="menu-item" type="button" data-original="依頼" data-alt="- CONTACT -">
-        <span class="label" data-display-text="依頼" data-glitch-text="">依頼</span>
+      <button class="menu-item" data-original="依頼" data-alt="- CONTACT -">
+        <span class="label" data-display-text="依頼"></span>
       </button>
     </div>
   </div>
@@ -247,95 +217,57 @@
   <div class="hint">MOVE CURSOR</div>
 
 <script>
-/* グリッチ：ホバー開始時に1回だけ */
+/* メニュー・グリッチ */
 (() => {
   const items = document.querySelectorAll(".menu-item");
-  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-#@$%&*";
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-  function glitchOnce(label, target, duration = 220) {
+  function glitchOnce(label, target, duration = 200) {
     const start = performance.now();
     const len = target.length;
-
-    function frame(now) {
+    function frame(now){
       const t = Math.min(1, (now - start) / duration);
       const reveal = Math.floor(len * t);
-
       let out = "";
-      for (let i = 0; i < len; i++) {
-        if (i < reveal) out += target[i];
-        else out += letters[(Math.random() * letters.length) | 0];
+      for(let i=0;i<len;i++){
+        out += i < reveal ? target[i] : letters[(Math.random()*letters.length)|0];
       }
       label.dataset.glitchText = out;
-
-      if (t < 1) requestAnimationFrame(frame);
+      if(t < 1) requestAnimationFrame(frame);
       else label.dataset.glitchText = "";
     }
     requestAnimationFrame(frame);
   }
 
-  items.forEach(btn => {
+  items.forEach(btn=>{
     const label = btn.querySelector(".label");
-    const original = btn.dataset.original ?? label.textContent.trim();
-    const alt = btn.dataset.alt ?? original;
+    const original = btn.dataset.original;
+    const alt = btn.dataset.alt;
 
-    label.dataset.displayText = original;
-    label.dataset.glitchText = "";
-
-    let played = false;
-    let glitchTimer = null;
-
-    btn.addEventListener("mouseenter", () => {
-      btn.classList.add("is-alt");
+    btn.addEventListener("mouseenter", ()=>{
+      btn.classList.add("is-alt","is-glitch");
       label.dataset.displayText = alt;
-
-      if (played) return;
-      played = true;
-
-      btn.classList.add("is-glitch");
       glitchOnce(label, alt);
-
-      glitchTimer = window.setTimeout(() => {
-        btn.classList.remove("is-glitch");
-        glitchTimer = null;
-        label.dataset.glitchText = "";
-      }, 260);
+      setTimeout(()=>btn.classList.remove("is-glitch"),260);
     });
 
-    btn.addEventListener("mouseleave", () => {
-      played = false;
-      if (glitchTimer) { clearTimeout(glitchTimer); glitchTimer = null; }
-
-      btn.classList.remove("is-glitch");
-      btn.classList.remove("is-alt");
-
+    btn.addEventListener("mouseleave", ()=>{
+      btn.classList.remove("is-alt","is-glitch");
       label.dataset.displayText = original;
       label.dataset.glitchText = "";
     });
-
-    btn.addEventListener("touchstart", () => {
-      btn.classList.add("is-alt");
-      btn.classList.add("is-glitch");
-      label.dataset.displayText = alt;
-      glitchOnce(label, alt, 180);
-
-      window.setTimeout(() => btn.classList.remove("is-glitch"), 240);
-      window.setTimeout(() => {
-        btn.classList.remove("is-alt");
-        label.dataset.displayText = original;
-        label.dataset.glitchText = "";
-      }, 520);
-    }, { passive:true });
   });
 })();
+</script>
 
 <script>
-/* 埃パーティクル（より発光／四角） */
+/* 埃パーティクル（軌跡なし／ふわふわランダム／四角／発光強め） */
 (() => {
   const canvas = document.getElementById("dust");
   const ctx = canvas.getContext("2d", { alpha:true });
 
   const DPR = Math.min(2, window.devicePixelRatio || 1);
-  let W=0, H=0;
+  let W = 0, H = 0;
 
   function resize(){
     W = window.innerWidth;
@@ -351,73 +283,90 @@
 
   const rand = (a,b)=>a+Math.random()*(b-a);
 
-  const baseCount = Math.floor((W * H) / 24000); // 少し増やす
-  const count = Math.max(34, Math.min(140, baseCount));
+  // 密度
+  const baseCount = Math.floor((W * H) / 28000);
+  const count = Math.max(28, Math.min(120, baseCount));
+
+  // “ふわふわ感”の調整つまみ
+  const MAX_SPEED = 0.35;      // 上げると漂いが速い
+  const TURN = 0.020;          // 上げると曲がりやすい（直線感が消える）
+  const WANDER = 0.018;        // 上げるとランダム感が強い
+  const DRAG = 0.992;          // 1に近いほど惰性が残る（0.985〜0.996が使いやすい）
 
   const ps = [];
   for(let i=0;i<count;i++){
+    const angle = rand(0, Math.PI * 2);
     ps.push({
-      x: rand(0,W), y: rand(0,H),
-      s: rand(1.2, 3.4),          // size（四角の一辺）
-      vx: rand(-0.12, 0.14),
-      vy: rand(-0.10, 0.12),
-      a: rand(0.10, 0.28),        // 基本透明度を上げる
-      tw: rand(0.004, 0.012),
+      x: rand(0,W),
+      y: rand(0,H),
+      s: rand(1.2, 3.2),       // 四角サイズ
+      vx: Math.cos(angle) * rand(0.05, 0.20),
+      vy: Math.sin(angle) * rand(0.05, 0.20),
+      a: rand(0.10, 0.26),     // 基本の明るさ
+      tw: rand(0.004, 0.012),  // 点滅速度
       ph: rand(0, Math.PI*2),
+      // “方向のゆらぎ”用
+      dir: angle,
+      drift: rand(0.6, 1.6),
     });
   }
 
   function step(){
-    // ほんのり残像（暗幕）
-    ctx.globalCompositeOperation = "source-over";
-    ctx.fillStyle = "rgba(0,0,0,0.20)"; // 値を下げると残像強め／上げると残像弱め
-    ctx.fillRect(0,0,W,H);
+    // ★軌跡なし：毎フレーム完全クリア
+    ctx.clearRect(0,0,W,H);
 
-    // 光を足していく
+    // 粒だけ光らせる（背景は変えない）
     ctx.globalCompositeOperation = "lighter";
-
-    // グロー設定（強め）
-    ctx.shadowColor = "rgba(79,195,255,0.55)";
+    ctx.shadowColor = "rgba(79,195,255,0.65)";
     ctx.shadowBlur = 18;
 
     for(const p of ps){
+      // 点滅（呼吸感）
       p.ph += p.tw;
-      const alpha = Math.max(0, p.a + Math.sin(p.ph) * 0.06);
+      const alpha = Math.max(0, p.a + Math.sin(p.ph) * 0.5);
 
-      // ゆらぎ
-      p.vx += rand(-0.0030, 0.0030);
-      p.vy += rand(-0.0030, 0.0030);
-      p.vx = Math.max(-0.22, Math.min(0.22, p.vx));
-      p.vy = Math.max(-0.18, Math.min(0.18, p.vy));
+      // “直線”にならないように：方向を常にゆらがせて曲げる
+      const noise = (Math.sin(p.ph * p.drift) + (Math.random() - 0.5)) * WANDER;
+      p.dir += noise;
+
+      // 速度ベクトルを “少しだけ” 進行方向へ寄せる（TURNで曲がりやすさ）
+      const tx = Math.cos(p.dir) * MAX_SPEED;
+      const ty = Math.sin(p.dir) * MAX_SPEED;
+
+      p.vx += (tx - p.vx) * TURN;
+      p.vy += (ty - p.vy) * TURN;
+
+      // 抵抗（ふわっと）
+      p.vx *= DRAG;
+      p.vy *= DRAG;
 
       p.x += p.vx;
       p.y += p.vy;
 
-      if(p.x < -16) p.x = W + 16;
-      if(p.x > W + 16) p.x = -16;
-      if(p.y < -16) p.y = H + 16;
-      if(p.y > H + 16) p.y = -16;
+      // 画面外ループ
+      if(p.x < -20) p.x = W + 20;
+      if(p.x > W + 20) p.x = -20;
+      if(p.y < -20) p.y = H + 20;
+      if(p.y > H + 20) p.y = -20;
 
-      const s = p.s;
-
-      // ① 外側の“にじみ”四角（ちょい大きく、薄く）
+      // ① グロー（少し大きめ・薄め）
       ctx.fillStyle = `rgba(120,180,255,${alpha * 0.55})`;
-      ctx.fillRect(p.x - s*0.9, p.y - s*0.9, s*1.8, s*1.8);
+      ctx.fillRect(p.x - p.s*0.9, p.y - p.s*0.9, p.s*1.8, p.s*1.8);
 
-      // ② 内側の“芯”四角（小さく、濃く）
-      ctx.shadowBlur = 8; // 芯は少しシャープ
-      ctx.fillStyle = `rgba(210,240,255,${alpha * 0.95})`;
-      ctx.fillRect(p.x - s*0.45, p.y - s*0.45, s*0.9, s*0.9);
+      // ② コア（小さめ・濃いめ）
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = `rgba(220,245,255,${alpha * 0.95})`;
+      ctx.fillRect(p.x - p.s*0.45, p.y - p.s*0.45, p.s*0.9, p.s*0.9);
 
-      // 次ループ用に戻す
       ctx.shadowBlur = 18;
     }
+
+    // 戻す（念のため）
+    ctx.globalCompositeOperation = "source-over";
 
     requestAnimationFrame(step);
   }
 
-  // 初期は透明から積み上げ
-  ctx.clearRect(0,0,W,H);
   step();
 })();
 </script>
