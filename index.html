@@ -323,10 +323,10 @@
     for(const p of ps){
       // 点滅（呼吸感）
       p.ph += p.tw;
-      const alpha = Math.max(0, p.a + Math.sin(p.ph) * 0.5);
+      const alpha = Math.max(0, p.a + Math.sin(p.ph) * 0.05);
 
       // “直線”にならないように：方向を常にゆらがせて曲げる
-      const noise = (Math.sin(p.ph * p.drift) + (Math.random() - 0.5)) * WANDER;
+      const noise = (Math.sin(p.ph * p.drift) + (Math.random() - 0.05)) * WANDER;
       p.dir += noise;
 
       // 速度ベクトルを “少しだけ” 進行方向へ寄せる（TURNで曲がりやすさ）
@@ -354,7 +354,7 @@
       ctx.fillRect(p.x - p.s*0.9, p.y - p.s*0.9, p.s*1.8, p.s*1.8);
 
       // ② コア（小さめ・濃いめ）
-      ctx.shadowBlur = 8;
+      ctx.shadowBlur = 1;
       ctx.fillStyle = `rgba(220,245,255,${alpha * 0.95})`;
       ctx.fillRect(p.x - p.s*0.45, p.y - p.s*0.45, p.s*0.9, p.s*0.9);
 
