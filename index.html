@@ -285,10 +285,10 @@
 
   // 密度
   const baseCount = Math.floor((W * H) / 28000);
-  const count = Math.max(28, Math.min(120, baseCount));
+  const count = Math.max(28, Math.min(70, baseCount));
 
   // “ふわふわ感”の調整つまみ
-  const MAX_SPEED = 0.35;      // 上げると漂いが速い
+  const MAX_SPEED = 0.1;      // 上げると漂いが速い
   const TURN = 0.020;          // 上げると曲がりやすい（直線感が消える）
   const WANDER = 0.018;        // 上げるとランダム感が強い
   const DRAG = 0.992;          // 1に近いほど惰性が残る（0.985〜0.996が使いやすい）
